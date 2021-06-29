@@ -1,0 +1,85 @@
+
+
+import streamlit as st
+import pandas as pd
+import numpy as np
+from fbprophet import Prophet
+from fbprophet.diagnostics import performance_metrics
+from fbprophet.diagnostics import cross_validation
+from fbprophet.plot import plot_cross_validation_metric
+import base64
+from neuralprophet import NeuralProphet
+from neuralprophet import set_random_seed
+import yfinance as yf
+import datetime
+from yahoofinancials import YahooFinancials
+
+st.title('📈 Automated FOREX USD-AUD Forecasting')
+
+
+"""
+###upload Live Data directly from Yahoo Financials
+"""
+import pandas_datareader as pdr
+from datetime import datetime
+current_date = date.today()
+import matplotlib.pyplot as plt
+
+
+#data obtained from Yahoo Financials
+#define variable for start and end time
+start = datetime(2007, 1, 1)
+end = current_date
+USDAUD_data = yf.download('AUD=X', start, end)
+plt.figure(figsize=(10, 7))
+plt.plot(USDAUD_data)       
+plt.title('USDAUD Prices')
+
+USDAUD_data.drop(column=['Open', 'High', 'Low', 'Adj Close', 'Volume'], axis=1, inplace=True)
+USDAUD_data
+
+USDAUD2 = USDAUD_data.reset_index().rename(columns={'Date': 'ds', 'Close': 'y'})
+USDAUD2.head                  
+                  
+
+"""
+### Step 2: Select Forecast Horizon
+
+Keep in mind that forecasts become less accurate with larger forecast horizons.
+"""
+
+periods_input = st.number_input('How many periods would you like to forecast into the future?',
+min_value = 1, max_value = 7)
+
+
+
+"""
+### Step 3: Visualize Forecast Data
+
+The below visual shows future predicted values. "yhat" is the predicted value, and the upper and lower limits are (by default) 80% confidence intervals.
+"""
+
+#using AR-Net
+model = NeuralProphet(
+    n_forecasts=60,
+    n_lags=60,
+    changepoints_range=0.95,
+    n_changepoints=100,
+    yearly_seasonality=True,
+    weekly_seasonality=False,
+    daily_seasonality=False,
+    batch_size=64,
+    epochs=100,
+    learning_rate=1.0,
+)
+
+model.fit(USDAUD2, 
+          freq='D',
+          valid_p=0.2,
+          epochs=100)
+
+plot_forecast(model, USDAUD2, periods=60, historic_pred=True)
+
+plot_forecast(model, USDAUD2, periods=60, historic_pred=False, highlight_steps_ahead=60)
+
+

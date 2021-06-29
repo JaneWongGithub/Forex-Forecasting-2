@@ -1,0 +1,7 @@
+fbprophet
+numpy==1.18.4
+streamlit
+pandas==1.0.3
+pystan==2.19.1.1
+neuralprophet
+matplotlib==3.3.4
